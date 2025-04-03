@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Assignments</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+        .container { display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: #007bff; color: white; padding: 20px; }
+        .sidebar h2 { margin: 0; padding-bottom: 20px; }
+        .sidebar a { display: block; color: white; padding: 10px; text-decoration: none; margin-bottom: 10px; border-radius: 5px; background: #0056b3; }
+        .sidebar a:hover { background: #003f7f; }
+        .main { flex: 1; padding: 20px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        th { background: #007bff; color: white; }
+        .btn { padding: 10px 20px; border: none; cursor: pointer; margin-top: 20px; }
+        .btn-reset { background: #dc3545; color: white; }
+        .btn-save { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Navigation</h2>
+        <a href="{% url 'home_page' %}">Home</a>
+        <a href="{% url 'assignment_list' %}">Status</a>
+        <a href="{% url 'admin:index' %}">Admin</a>
+        <a href="{% url 'upload_teachers' %}">Upload Teacher Data</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <h1>Teacher Assignment List</h1>
+
+        <!-- Filter Section -->
+        <form method="get" class="filter-section">
+            <label for="venue">By Venue:</label>
+            <select name="venue" id="venue">
+                <option value="All" {% if selected_venue == "All" %}selected{% endif %}>All</option>
+                {% for venue in venues %}
+                <option value="{{ venue.name }}" {% if venue.name == selected_venue %}selected{% endif %}>{{ venue.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="status">By Attendance Status:</label>
+            <select name="status" id="status">
+                <option value="All" {% if selected_status == "All" %}selected{% endif %}>All</option>
+                <option value="Present" {% if selected_status == "Present" %}selected{% endif %}>Present</option>
+                <option value="Absent" {% if selected_status == "Absent" %}selected{% endif %}>Absent</option>
+            </select>
+
+            <button type="submit" class="btn btn-save">Filter</button>
+        </form>
+
+        <!-- Assignment Table -->
+        <table>
+            <tr>
+                <th>Teacher</th>
+                <th>Department</th>
+                <th>Venue</th>
+                <th>Attendance Status</th>
+                <th>Assigned At</th>
+            </tr>
+            {% for assignment in assignments %}
+            <tr>
+                <td>{{ assignment.teacher.name }}</td>
+                <td>{{ assignment.teacher.department }}</td>
+                <td>{{ assignment.venue.name }}</td>
+                <td>{{ assignment.attendance_status }}</td>
+                <td>{{ assignment.assigned_at }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No assignments found</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

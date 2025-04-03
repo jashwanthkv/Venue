@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Attendance System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+        .container { display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: #007bff; color: white; padding: 20px; }
+        .sidebar h2 { margin: 0; padding-bottom: 20px; }
+        .sidebar a { display: block; color: white; padding: 10px; text-decoration: none; margin-bottom: 10px; border-radius: 5px; background: #0056b3; }
+        .sidebar a:hover { background: #003f7f; }
+        .main { flex: 1; padding: 20px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        th { background: #007bff; color: white; }
+        .btn { padding: 10px 20px; border: none; cursor: pointer; margin-top: 20px; }
+        .btn-reset { background: #dc3545; color: white; }
+        .btn-save { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <h2>Navigation</h2>
+        <a href="{% url 'admin:index' %}">Admin</a>
+        <a href="{% url 'assignment_list' %}">Status</a>
+        <a href="{% url 'download_attendance' %}">Download Attendance excel</a>
+        <a href="{% url 'upload_teachers' %}">uploads teachers</a>
+    </div>
+    <div class="main">
+        <h1>Welcome to the Teacher Attendance System</h1>
+
+<!-- External Teacher Decision -->
+<form method="get" action="{% url 'add_external_teacher' %}">
+    <label>Add External Teachers?</label>
+    <button type="submit" class="btn btn-save">Yes</button>
+</form>
+
+<!-- Generate List Button -->
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" name="generate_list" class="btn btn-save">Generate List</button>
+</form>
+
+<!-- Attendance Form (hidden until Generate is clicked) -->
+{% if show_assignments %}
+<form method="post">
+    {% csrf_token %}
+    <table>
+        <tr>
+            <th>Teacher ID</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Venue</th>
+            <th>Status</th>
+        </tr>
+        {% for assignment in assignments %}
+        <tr>
+            <td>{{ assignment.teacher.teacher_id }}</td>
+            <td>{{ assignment.teacher.name }}</td>
+            <td>{{ assignment.teacher.department }}</td>
+            <td>{{ assignment.venue.name }}</td>
+            <td>
+                <input type="checkbox" name="attendance_{{ assignment.id }}" {% if assignment.attendance_status == 'Present' %}checked{% endif %}>
+                Present
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <button type="submit" name="save_attendance" class="btn btn-save">Save Attendance</button>
+</form>
+{% endif %}
+
+    </div>
+</div>
+
+</body>
+</html>

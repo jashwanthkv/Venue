@@ -1,0 +1,13 @@
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let checkBox = document.getElementById("attendance-checkbox");
+    if (checkBox) {
+        checkBox.checked = true;
+        document.getElementById("attendance-form").submit();  // Auto-submit
+    }
+});
+</script>
+
+<form id="attendance-form" method="POST" action="{% url 'save_attendance' %}">
+    <input type="checkbox" id="attendance-checkbox" name="attendance" checked hidden>
+</form>

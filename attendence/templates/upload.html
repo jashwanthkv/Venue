@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Teacher Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f9f9f9;
+        }
+        .container {
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+        }
+        .upload-box {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .template-box {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px dashed #007bff;
+            background-color: #e9f7fe;
+        }
+        .upload-btn {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .upload-btn:hover {
+            background-color: #218838;
+        }
+        .footer-buttons {
+            margin-top: 20px;
+        }
+        .footer-buttons a {
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            color: white;
+        }
+        .admin-btn {
+            background-color: #007bff;
+        }
+        .status-btn {
+            background-color: #ffc107;
+        }
+        .download-btn {
+            background-color: #17a2b8;
+        }
+        .download-btn:hover {
+            background-color: #138496;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Upload Teacher Data</h2>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <div class="upload-box">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="upload-btn">Upload</button>
+        </form>
+
+        <div class="template-box">
+            <h3>Template Format</h3>
+            <a href="{% url 'download_template' %}" class="download-btn">Download Template (Excel)</a>
+        </div>
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="footer-buttons">
+        <a href="{% url 'home_page' %}" class="admin-btn">Home</a>
+        <a href="{% url 'assignment_list' %}" class="status-btn">Status</a>
+        <a href="{% url 'admin:index' %}" class="admin-btn">Admin</a>
+    </div>
+</div>
+
+</body>
+</html>
