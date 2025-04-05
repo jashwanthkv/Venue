@@ -81,10 +81,10 @@ import os
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'exam_db',  # Database name
-        'USER': 'django_user',  # MySQL username
-        'PASSWORD': 'CitChennai',  # MySQL password
-        'HOST': 'localhost',
+        'NAME': 'b7mliyibcbpyyc0qxg1b',  # Database name
+        'USER': 'udkrnhquxdm6822a',  # MySQL username
+        'PASSWORD': 'g9y7K3VAFepfn0piQ0BL',  # MySQL password
+        'HOST': 'b7mliyibcbpyyc0qxg1b-mysql.services.clever-cloud.com',
         'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
