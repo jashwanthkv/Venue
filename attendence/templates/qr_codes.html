@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Venue QR Codes</title>
+    <style>
+        .qr-container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .qr-item {
+            margin: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR Codes for All Venues</h1>
+    <div class="qr-container">
+        {% for qr in qr_codes %}
+            <div class="qr-item">
+                <h3>{{ qr.name }}</h3>
+                <img src="data:image/png;base64,{{ qr.img }}" alt="QR for {{ qr.name }}">
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

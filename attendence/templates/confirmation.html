@@ -1,13 +1,61 @@
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    let checkBox = document.getElementById("attendance-checkbox");
-    if (checkBox) {
-        checkBox.checked = true;
-        document.getElementById("attendance-form").submit();  // Auto-submit
-    }
-});
-</script>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance Status</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .emoji {
+            font-size: 3rem;
+            animation: float 2s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
 
-<form id="attendance-form" method="POST" action="{% url 'save_attendance' %}">
-    <input type="checkbox" id="attendance-checkbox" name="attendance" checked hidden>
-</form>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const message = "{{ message }}";
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = "en-US";
+            utterance.rate = 1.5;
+
+            // Try to select a female voice (fallback to any English voice)
+            function speakWithPreferredVoice() {
+                const voices = speechSynthesis.getVoices();
+                let preferredVoice = voices.find(v =>
+                    v.name.toLowerCase().includes("female") ||
+                    v.name.toLowerCase().includes("google uk english female")
+                );
+
+                if (!preferredVoice) {
+                    // Fallback to first English voice
+                    preferredVoice = voices.find(v => v.lang === "en-US" || v.lang === "en-GB");
+                }
+
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                }
+
+                speechSynthesis.speak(utterance);
+            }
+
+            // Wait for voices to be loaded
+            if (speechSynthesis.getVoices().length === 0) {
+                speechSynthesis.onvoiceschanged = speakWithPreferredVoice;
+            } else {
+                speakWithPreferredVoice();
+            }
+        });
+    </script>
+
+</body>
+</html>

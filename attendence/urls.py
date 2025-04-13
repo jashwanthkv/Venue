@@ -6,7 +6,6 @@ urlpatterns = [
     path('', views.home_page, name='home_page'),
     path('admin/', admin.site.urls),
     path('download_template/', views.download_template, name='download_template'),
-    path('venues/', views.venue_selection_view, name='venue-selection'),
     path('uploads/', views.upload_teachers, name="upload_teachers"),
     path('assign/', views.assignment_list, name="assignment_list"),
     path('random-assignment/', views.random_assignment, name='random_assignment'),

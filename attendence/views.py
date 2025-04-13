@@ -284,36 +284,67 @@ def verify_otp(request):
     return render(request, "otp_verification.html")
 
 @csrf_exempt
+
+
 def save_attendance(request):
     if request.method == "POST":
         email = request.session.get("teacher_email")
         teacher_id = request.session.get("teacher_id")
         venue_id = request.session.get("venue_id")
 
+        print("Session Data:")
+        print("Email:", email)
+        print("Teacher ID:", teacher_id)
+        print("Venue ID:", venue_id)
+
         teacher = Teacher.objects.filter(email=email, teacher_id=teacher_id).first()
+        print("Teacher found:", teacher)
+
         if teacher:
-            assignment = Assignment.objects.filter(teacher=teacher, venue_id=venue_id).first()
+            venue = Venue.objects.filter(id=venue_id).first()
+            print("Venue object:", venue)
+
+            assignment = Assignment.objects.filter(teacher=teacher, venue=venue).first()
+
             if assignment:
                 assignment.attendance_status = "Present"
                 assignment.save()
-                return JsonResponse({"success": True})
+                print("Attendance saved.")
+                return render(request, "confirmation.html", {"message": "Attendance marked!"})
+            else:
+                print("No assignment found.")
 
-    return JsonResponse({"success": False})
+        else:
+            print("Teacher not found.")
+
+    print("Returning failure response.")
+    return render(request, "confirmation.html", {"message": "Failed to Register Attendance."})
 
 
+
+
+# import qrcode
+# import base64
+# from io import BytesIO
+# from django.shortcuts import render
 # from .models import Venue
 #
 # def generate_all_qr_codes(request):
-#     venues = Venue.objects.all()  # Or filter if needed
+#     venues = Venue.objects.all()
 #     qr_codes = []
 #
 #     for venue in venues:
-#         venue_id = venue.id  # or venue.code or venue.name, based on your model
-#         url = f"http://127.0.0.1:8000/scan/{venue_id}"
+#         url = f"http://127.0.0.1:8000/scan/{venue.id}"  # Adjust to ngrok/public URL in production
 #         qr = qrcode.make(url)
+#
 #         buffer = BytesIO()
 #         qr.save(buffer, format="PNG")
 #         img_base64 = base64.b64encode(buffer.getvalue()).decode()
-#         qr_codes.append({"id": venue_id, "img": img_base64})
+#
+#         qr_codes.append({
+#             "id": venue.id,
+#             "name": venue.name,  # Assuming you have a `name` field on Venue model
+#             "img": img_base64
+#         })
 #
 #     return render(request, "qr_codes.html", {"qr_codes": qr_codes})
