@@ -47,6 +47,7 @@ def assign_teachers_randomly():
 
 
 
+
 def clean_expired_assignments():
     expired_assignments = Assignment.objects.filter(assigned_at__lt=now() - timedelta(hours=1))
     if expired_assignments.exists():

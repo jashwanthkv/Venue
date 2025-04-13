@@ -7,18 +7,71 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
         .container { display: flex; height: 100vh; }
-        .sidebar { width: 250px; background: #007bff; color: white; padding: 20px; }
+
+        .header {
+        text-align: left;
+        padding: 20px 0;
+        background: #f9f9f9;
+        color: #333;
+        width: 100%;
+        position: relative;
+        }
+
+        .logo {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            height: 90px; /* Adjust size as needed */
+        }
+
+
+        .header h1, .header h2 {
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #007bff;
+            color: white;
+            padding: 20px;
+        }
+
         .sidebar h2 { margin: 0; padding-bottom: 20px; }
-        .sidebar a { display: block; color: white; padding: 10px; text-decoration: none; margin-bottom: 10px; border-radius: 5px; background: #0056b3; }
+        .sidebar a {
+            display: block;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background: #0056b3;
+        }
         .sidebar a:hover { background: #003f7f; }
-        .main { flex: 1; padding: 20px; }
-        h1 { color: #333; }
+
+        .main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        h1, h2 { color: #333; }
+
+        .btn { padding: 10px 20px; border: none; cursor: pointer; margin: 10px 10px 0 0; }
+        .btn-reset { background: #dc3545; color: white; }
+        .btn-save { background: #28a745; color: white; }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         table, th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
         th { background: #007bff; color: white; }
-        .btn { padding: 10px 20px; border: none; cursor: pointer; margin-top: 20px; }
-        .btn-reset { background: #dc3545; color: white; }
-        .btn-save { background: #28a745; color: white; }
     </style>
 </head>
 <body>
@@ -27,56 +80,95 @@
     <div class="sidebar">
         <h2>Navigation</h2>
         <a href="{% url 'admin:index' %}">Admin</a>
-        <a href="{% url 'assignment_list' %}">Status</a>
-        <a href="{% url 'download_attendance' %}">Download Attendance excel</a>
-        <a href="{% url 'upload_teachers' %}">uploads teachers</a>
+        <a href="{% url 'download_attendance' %}">Download Attendance Excel</a>
+        <a href="{% url 'upload_teachers' %}">Upload Teachers</a>
     </div>
+
     <div class="main">
-        <h1>Welcome to the Teacher Attendance System</h1>
+        <div class="header">
+            <img src="data:image/png;base64,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"
+     alt="CIT Logo"
+     class="logo">
+            <h1>Teacher Venue System</h1>
+        </div>
 
-<!-- External Teacher Decision -->
-<form method="get" action="{% url 'add_external_teacher' %}">
-    <label>Add External Teachers?</label>
-    <button type="submit" class="btn btn-save">Yes</button>
+        <div class="button-row">
+            <form method="get" action="{% url 'add_external_teacher' %}">
+                <button type="submit" class="btn btn-save">External Teachers?</button>
+            </form>
+
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="generate_list" class="btn btn-save">Generate List</button>
+            </form>
+        </div>
+
+        {% if show_assignments %}
+        <form method="get">
+
+    <label for="status">Status:</label>
+    <select name="status" id="status">
+        <option value="All">All</option>
+        <option value="Present" {% if selected_status == "Present" %}selected{% endif %}>Present</option>
+        <option value="Absent" {% if selected_status == "Absent" %}selected{% endif %}>Absent</option>
+    </select>
+
+    <button type="submit">Filter</button>
 </form>
 
-<!-- Generate List Button -->
-<form method="post">
-    {% csrf_token %}
-    <button type="submit" name="generate_list" class="btn btn-save">Generate List</button>
-</form>
 
-<!-- Attendance Form (hidden until Generate is clicked) -->
-{% if show_assignments %}
-<form method="post">
-    {% csrf_token %}
-    <table>
-        <tr>
-            <th>Teacher ID</th>
-            <th>Name</th>
-            <th>Department</th>
-            <th>Venue</th>
-            <th>Status</th>
-        </tr>
-        {% for assignment in assignments %}
-        <tr>
-            <td>{{ assignment.teacher.teacher_id }}</td>
-            <td>{{ assignment.teacher.name }}</td>
-            <td>{{ assignment.teacher.department }}</td>
-            <td>{{ assignment.venue.name }}</td>
-            <td>
-                <input type="checkbox" name="attendance_{{ assignment.id }}" {% if assignment.attendance_status == 'Present' %}checked{% endif %}>
-                Present
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    <button type="submit" name="save_attendance" class="btn btn-save">Save Attendance</button>
-</form>
-{% endif %}
-
+        <table>
+            <thead>
+                <tr>
+                    <th>Teacher ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Venue</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="attendance-table-body">
+                {% for assignment in assignments %}
+                <tr>
+                    <td>{{ assignment.teacher.teacher_id }}</td>
+                    <td>{{ assignment.teacher.name }}</td>
+                    <td>{{ assignment.teacher.department }}</td>
+                    <td>{{ assignment.venue.name }}</td>
+                    <td>{{ assignment.attendance_status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
     </div>
 </div>
+
+<!-- 🔄 JavaScript to auto-refresh attendance table -->
+<script>
+function fetchUpdatedAttendance() {
+    fetch("{% url 'assignment_data' %}")
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById("attendance-table-body");
+            tbody.innerHTML = "";
+
+            data.assignments.forEach(item => {
+                const row = `
+                    <tr>
+                        <td>${item.teacher_id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.department}</td>
+                        <td>${item.venue}</td>
+                        <td>${item.status}</td>
+                    </tr>`;
+                tbody.innerHTML += row;
+            });
+        })
+        .catch(error => console.error("Error fetching updates:", error));
+}
+
+setInterval(fetchUpdatedAttendance, 5000);
+</script>
 
 </body>
 </html>

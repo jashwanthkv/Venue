@@ -15,5 +15,8 @@ urlpatterns = [
     path("scan/<int:venue_id>/", views.scan_qr, name="scan_qr"),
     path("verify_otp/", views.verify_otp, name="verify_otp"),
     path("save_attendance/", views.save_attendance, name="save_attendance"),
+    # path("qrs",views.generate_all_qr_codes,name="generate_all_qr_codes"),
+    path('generate/', views.generate_assignments, name='generate_assignments'),
+    path('assignment-data/', views.assignment_data, name='assignment_data'),
 
 ]

@@ -1,45 +1,76 @@
+import base64
 from datetime import timedelta
+from io import BytesIO
+
+import qrcode
 from django.forms import modelformset_factory
 from django.db import transaction
+from django.middleware.csrf import get_token
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.utils.timezone import now
+from django.views.decorators.csrf import csrf_exempt
+
 from .models import Venue, Teacher, Assignment
 from .forms import VenueSelectionForm, Form_to_data, ExternalTeacherForm
 from .utils import assign_teachers_randomly
 import pandas as pd
 
 show_assignments = False
-
 def home_page(request):
-    global show_assignments
     clean_expired_assignments()
 
     assignments = Assignment.objects.select_related('teacher', 'venue').all()
-    external_teachers = Teacher.objects.filter(is_temporary=True)
+    valid_assignments = [a for a in assignments if not a.is_expired()]
 
+    external_teachers = Teacher.objects.filter(is_temporary=True)
     for teacher in external_teachers:
         if teacher.is_expired():
             teacher.delete()
 
-    if request.method == 'POST':
-        if 'save_attendance' in request.POST:
-            for assignment in assignments:
-                checkbox_name = f'attendance_{assignment.id}'
-                assignment.attendance_status = "Present" if checkbox_name in request.POST else "Absent"
-                assignment.save()
-            return redirect('home_page')
+    # ✅ Save attendance manually
+    if request.method == 'POST' and 'save_attendance' in request.POST:
+        for assignment in assignments:
+            checkbox_name = f'attendance_{assignment.id}'
+            assignment.attendance_status = "Present" if checkbox_name in request.POST else "Absent"
+            assignment.save()
+        return redirect('home_page')
 
-        if 'generate_list' in request.POST:
-            show_assignments = True
+    # ✅ Generate new assignment list
+    if request.method == 'POST' and 'generate_list' in request.POST:
+        with transaction.atomic():
+            clean_expired_assignments()
+            Assignment.objects.all().delete()
             assign_teachers_randomly()
-
-    valid_assignments = [assignment for assignment in assignments if not assignment.is_expired()]
+        return redirect('home_page')
 
     return render(request, "home.html", {
-        'assignments': valid_assignments if show_assignments else [],
-        'show_assignments': show_assignments and bool(valid_assignments)
+        'assignments': valid_assignments,
+        'show_assignments': bool(valid_assignments)
     })
+
+def assignment_data(request):
+    assignments = Assignment.objects.select_related('teacher', 'venue').all()
+    data = []
+
+    for assignment in assignments:
+        data.append({
+            'teacher_id': assignment.teacher.teacher_id,
+            'name': assignment.teacher.name,
+            'department': assignment.teacher.department,
+            'venue': assignment.venue.name,
+            'status': assignment.attendance_status,
+        })
+
+    return JsonResponse({'assignments': data})
+
+
+def generate_assignments(request):
+    with transaction.atomic():
+        clean_expired_assignments()
+        Assignment.objects.all().delete()
+        assign_teachers_randomly()
+    return redirect('home_page')
 
 
 def add_external_teacher(request):
@@ -56,7 +87,7 @@ def add_external_teacher(request):
 
 
 def clean_expired_assignments():
-    expired_assignments = Assignment.objects.filter(assigned_at__lt=now() - timedelta(minutes=180))
+    expired_assignments = Assignment.objects.filter(assigned_at__lt=now() - timedelta(minutes=20))
     if expired_assignments.exists():
         expired_assignments.delete()
 
@@ -179,39 +210,63 @@ OTP_STORE = {}
 
 from .models import OTPRecord
 
+
+@csrf_exempt
 def scan_qr(request, venue_id):
     if request.method == "POST":
         teacher_id = request.POST["teacher_id"]
         email = request.POST["email"]
 
+        # Check if a teacher exists with this ID and email
         teacher = Teacher.objects.filter(teacher_id=teacher_id, email=email).first()
         if not teacher:
-            return render(request, "scan.html", {"error": "Invalid Teacher ID or Email"})
+            return render(request, "scan.html", {
+                "error": "Invalid Teacher ID or Email",
+                "venue_id": venue_id
+            })
 
         # Generate OTP and save in DB
         otp = random.randint(100000, 999999)
-        OTPRecord.objects.update_or_create(email=email, defaults={"otp": otp, "created_at": now()})
+        OTPRecord.objects.update_or_create(email=email, defaults={
+            "otp": otp,
+            "created_at": now()
+        })
 
         # Send OTP via Email
-        send_mail("Your OTP for Attendance", f"Your OTP is {otp}.", "noreply@yourdomain.com", [email])
+        send_mail(
+            "Your OTP for Attendance",
+            f"Your OTP is {otp}.",
+            "jashwanthkv2005@gmail.com",  # Replace with DEFAULT_FROM_EMAIL or actual email
+            [email]
+        )
 
+        # Store necessary session data
         request.session["teacher_email"] = email
+        request.session["teacher_id"] = teacher_id
         request.session["venue_id"] = venue_id
+
         return redirect("verify_otp")
 
     return render(request, "scan.html", {"venue_id": venue_id})
 
-
+@csrf_exempt
 def verify_otp(request):
     if request.method == "POST":
         email = request.session.get("teacher_email")
+        teacher_id = request.session.get("teacher_id")
         venue_id = request.session.get("venue_id")
         entered_otp = request.POST["otp"]
 
         otp_record = OTPRecord.objects.filter(email=email).first()
 
         if otp_record and otp_record.otp == int(entered_otp) and otp_record.is_valid():
-            teacher = Teacher.objects.get(email=email)
+            teacher = Teacher.objects.filter(email=email, teacher_id=teacher_id).first()
+
+            if not teacher:
+                return render(request, "otp_verification.html", {
+                    "error": "Teacher not found with given email and ID."
+                })
+
             assignment = Assignment.objects.filter(teacher=teacher, venue_id=venue_id).first()
 
             if assignment:
@@ -222,16 +277,20 @@ def verify_otp(request):
             else:
                 return render(request, "confirmation.html", {"message": "No assignment found for this venue!"})
 
-        return render(request, "otp_verification.html", {"error": "Incorrect or Expired OTP"})
+        return render(request, "otp_verification.html", {
+            "error": "Incorrect or Expired OTP"
+        })
 
     return render(request, "otp_verification.html")
 
+@csrf_exempt
 def save_attendance(request):
     if request.method == "POST":
         email = request.session.get("teacher_email")
+        teacher_id = request.session.get("teacher_id")
         venue_id = request.session.get("venue_id")
 
-        teacher = Teacher.objects.filter(email=email).first()
+        teacher = Teacher.objects.filter(email=email, teacher_id=teacher_id).first()
         if teacher:
             assignment = Assignment.objects.filter(teacher=teacher, venue_id=venue_id).first()
             if assignment:
@@ -240,3 +299,21 @@ def save_attendance(request):
                 return JsonResponse({"success": True})
 
     return JsonResponse({"success": False})
+
+
+# from .models import Venue
+#
+# def generate_all_qr_codes(request):
+#     venues = Venue.objects.all()  # Or filter if needed
+#     qr_codes = []
+#
+#     for venue in venues:
+#         venue_id = venue.id  # or venue.code or venue.name, based on your model
+#         url = f"http://127.0.0.1:8000/scan/{venue_id}"
+#         qr = qrcode.make(url)
+#         buffer = BytesIO()
+#         qr.save(buffer, format="PNG")
+#         img_base64 = base64.b64encode(buffer.getvalue()).decode()
+#         qr_codes.append({"id": venue_id, "img": img_base64})
+#
+#     return render(request, "qr_codes.html", {"qr_codes": qr_codes})
